@@ -1,0 +1,806 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>TheRealNepomuk — engineering portfolio</title>
+    <style>
+        *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+        :root {
+            --bg: #1c1c1c;
+            --border: #2e2e2e;
+            --text: #ffffff;
+            --text-dim: #888;
+            --accent: #e0733a;
+            --cyan: #38bdf8;
+            --red: #f87171;
+            --yellow: #fbbf24;
+            --code-bg: #141414;
+        }
+
+        body {
+            font-family: 'SF Mono', 'Fira Code', 'Consolas', monospace;
+            background: var(--bg);
+            color: var(--text);
+            line-height: 1.6;
+            font-size: 13px;
+        }
+
+
+        main {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 3rem 2rem 6rem;
+        }
+
+        /* HERO */
+        .hero {
+            margin-bottom: 6rem;
+            padding-bottom: 3rem;
+            border-bottom: 1px solid var(--border);
+        }
+
+        .hero h1 {
+            font-size: clamp(1.6rem, 5vw, 2.6rem);
+            font-weight: 400;
+            color: var(--text);
+            font-variant: small-caps;
+            letter-spacing: 0.12em;
+        }
+
+        /* PROJECT HEADER */
+        .project-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+            color: var(--text);
+            margin-bottom: 0.6rem;
+        }
+
+        .project-name span { color: var(--text); font-weight: 400; font-size: 0.82rem; margin-left: 0.75rem; opacity: 0.5; }
+
+        .project-overview { font-size: 0.82rem; color: var(--text); line-height: 1.8; margin-bottom: 1.25rem; max-width: 680px; }
+        .project-overview .services-label { color: var(--text-dim); margin-top: 0.5rem; margin-bottom: 0.1rem; }
+        .project-overview ul { list-style: none; margin-top: 0; }
+        .project-overview ul li::before { content: '• '; color: var(--text); }
+        .project-overview ul li { padding: 0; line-height: 1.55; }
+
+        /* TREE */
+        .tree-header {
+            display: flex;
+            align-items: baseline;
+            gap: 0.55rem;
+            cursor: pointer;
+            padding: 0.28rem 0;
+            user-select: none;
+        }
+
+        .tree-header:hover .tree-label { color: var(--text); }
+
+        .tree-icon {
+            color: var(--accent);
+            font-size: 0.6rem;
+            width: 0.7rem;
+            flex-shrink: 0;
+            text-align: center;
+        }
+
+        .tree-item.open > .tree-header > .tree-icon { color: var(--text); }
+
+        /* LEVEL 1 */
+        [data-level="1"] > .tree-header { margin-top: 0.15rem; }
+        [data-level="1"] > .tree-header .tree-num { color: var(--accent); font-size: 0.78rem; }
+        [data-level="1"] > .tree-header .tree-label {
+            color: var(--text);
+            font-size: 0.88rem;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+        }
+
+        /* LEVEL 2 */
+        [data-level="2"] > .tree-header { padding-left: 1.4rem; }
+        [data-level="2"] > .tree-header .tree-label { color: var(--text); font-size: 0.83rem; }
+
+        /* LEVEL 3 */
+        [data-level="3"] > .tree-header { padding-left: 2.8rem; }
+        [data-level="3"] > .tree-header .tree-label { color: var(--text); font-size: 0.8rem; }
+        [data-level="3"]:hover > .tree-header .tree-label { color: var(--text); }
+
+        /* TAGS */
+        .tag { font-size: 0.68rem; padding: 0.05em 0.35em; border-radius: 2px; flex-shrink: 0; }
+        .tag-bug  { color: var(--red); border: 1px solid rgba(251,146,60,0.3); }
+        .tag-code { color: var(--cyan);   border: 1px solid rgba(56,189,248,0.3); }
+        .tag-note { color: var(--yellow); border: 1px solid rgba(251,191,36,0.3); }
+        .tag-log  { color: var(--cyan);   border: 1px solid rgba(56,189,248,0.3); }
+
+        /* BODY */
+        .tree-body { max-height: 0; overflow: hidden; transition: max-height 0.22s ease; }
+        .tree-body.open { max-height: 9999px; }
+
+        .bc { margin-bottom: 0.3rem; }
+
+        [data-level="1"] > .tree-body > .bc { margin-left: 0.35rem; padding: 0.4rem 0 0.5rem 1.1rem; }
+        [data-level="2"] > .tree-body > .bc { margin-left: 1.75rem; padding: 0.35rem 0 0.4rem 1rem; }
+        [data-level="3"] > .tree-body > .bc { margin-left: 3.15rem; padding: 0.35rem 0 0.4rem 1rem; }
+
+        /* TEXT */
+        .t { font-size: 0.82rem; color: var(--text); line-height: 1.8; }
+        .t p { margin-bottom: 0.4rem; }
+        .t code { color: var(--cyan); font-size: 0.85em; }
+
+        /* INCIDENT */
+        .incident { font-size: 0.8rem; }
+        .ir { display: grid; grid-template-columns: 90px 1fr; gap: 0.4rem 0.6rem; margin-bottom: 0.25rem; }
+        .ik { color: var(--text); font-size: 0.72rem; }
+        .ik::after { content: ' ──'; color: var(--border); }
+        .iv { color: var(--text); line-height: 1.65; }
+        .iv.fix { color: var(--accent); }
+
+        /* CODE */
+        pre {
+            background: var(--code-bg);
+            border: 1px solid var(--border);
+            border-left: 2px solid var(--cyan);
+            padding: 0.7rem 1rem;
+            overflow-x: auto;
+            font-size: 0.76rem;
+            line-height: 1.65;
+            color: #7c8fa8;
+            margin: 0.5rem 0 0.1rem;
+            font-family: inherit;
+        }
+
+        .cm { color: var(--text-dim); }
+        code { color: var(--cyan); font-size: 0.85em; font-family: inherit; }
+        pre code { color: inherit; font-size: inherit; }
+
+footer {
+            border-top: 1px solid var(--border);
+            padding: 1.5rem 2rem;
+            text-align: center;
+            color: var(--text-dim);
+            font-size: 0.75rem;
+        }
+
+        footer a { color: var(--accent); text-decoration: none; }
+    </style>
+</head>
+<body>
+
+<main>
+
+    <section class="hero">
+        <h1>TheRealNepomuk — engineering portfolio</h1>
+    </section>
+
+    <div class="project-name">Low Budget Open Source Home Server <span>// home infrastructure</span></div>
+    <div class="project-overview">
+        Dell Wyse 5070 thin client re-purposed to a home server, with 4TB of attached HDD storage.
+        <p class="services-label">Running services:</p>
+        <ul>
+            <li>Immich — photo management</li>
+            <li>Tailscale — remote access</li>
+            <li>Pi-hole — network ad blocking</li>
+            <li>Home Assistant — smart home</li>
+            <li>Samba + Filebrowser — file server</li>
+            <li>Rotating offsite backup system</li>
+        </ul>
+    </div>
+
+    <div class="tree">
+
+            <div class="tree-item" data-level="1">
+                <div class="tree-header" onclick="tog(this)">
+                    <span class="tree-icon">▶</span>
+                    <span class="tree-num">[01]</span>
+                    <span class="tree-label">Working Method</span>
+                </div>
+                <div class="tree-body">
+                <div class="bc">
+                    <div class="t"><p>All configuration and maintenance is tracked through a three-layer documentation system, designed to keep complex infrastructure legible across months of intermittent work.</p></div>
+
+                    <div class="tree-item" data-level="2">
+                        <div class="tree-header" onclick="tog(this)">
+                            <span class="tree-icon">▶</span>
+                            <span class="tree-label">Central config index</span>
+                        </div>
+                        <div class="tree-body">
+                        <div class="bc">
+                            <div class="t">
+                                <p>A single master file (<code>Wyse5070Server-Config.md</code>) that acts as the table of contents for the entire system. Kept intentionally short — component status, service URLs, quick-reference commands, and links to each subsystem file. The entry point for any session; never grows beyond its purpose.</p>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                    <div class="tree-item" data-level="2">
+                        <div class="tree-header" onclick="tog(this)">
+                            <span class="tree-icon">▶</span>
+                            <span class="tree-label">Per-subsystem config files</span>
+                        </div>
+                        <div class="tree-body">
+                        <div class="bc">
+                            <div class="t">
+                                <p>One dedicated file per service — Tailscale, Pi-hole, Home Assistant, file server, backup system, and hardware. Each contains the full technical detail for that subsystem: config paths, relevant options explained, and any non-obvious decisions. Alongside these, a shared known-issues reference lists recurring symptoms with quick fixes and pointers back to the session log where each was resolved. Only the file relevant to the current session needs to be loaded.</p>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                    <div class="tree-item" data-level="2">
+                        <div class="tree-header" onclick="tog(this)">
+                            <span class="tree-icon">▶</span>
+                            <span class="tree-label">Session logs</span>
+                        </div>
+                        <div class="tree-body">
+                        <div class="bc">
+                            <div class="t">
+                                <p>Every working session gets a dated entry: what was done, what was tried, root cause if something broke, and what was learned. This is the layer that answers the question config files can't — <em>why does this look like this?</em> It also surfaces patterns: recurring failures or issues that seem unrelated until the log shows they're not.</p>
+
+                                <div class="tree-item" data-level="3">
+                                    <div class="tree-header" onclick="tog(this)">
+                                        <span class="tree-icon">▶</span>
+                                        <span class="tag tag-log">log</span>
+                                        <span class="tree-label">February 5, 2026 — HDD Spin-Down Fix: journald + Webmin</span>
+                                    </div>
+                                    <div class="tree-body">
+                                    <div class="bc">
+<pre>## Session: February 5, 2026 - HDD Spin-Down Fix
+Date: February 5, 2026 | Time: ~10:30–12:35 | Duration: ~2 hours
+
+Goals:
+1. Identify and eliminate all processes waking the drive
+2. Verify with soak test
+
+Background: Since Feb 4, drive forced to spin 24/7 (-S 0 -B 254) because
+any spin-down attempt resulted in immediate wake-up within 2-3 seconds.
+
+### Part 1: journald Fix
+Problem: systemd-journald calls sync() every 5 min. Despite journald writing
+to the SSD, sync() is a global kernel call — flushes ALL mounted filesystems,
+triggering jbd2 journal commits on the HDD.
+
+Fix: Storage=volatile in /etc/systemd/journald.conf
+Verified: journalctl --header shows journal at /run/log/journal/ (RAM) ✓
+
+### Part 2: First Test — Drive Still Wakes After 5 Min
+fatrace showed NO filesystem-level access to /mnt/storage — still kernel-internal.
+Something else is waking it.
+
+### Part 3: Root Cause #2 — Webmin
+fatrace output:
+  09:43:54 df(44212): CO  /mnt/storage
+  09:48:56 df(44945): O   /mnt/storage
+  09:53:59 df(45696): CO  /mnt/storage
+
+Traced to Webmin: miniserv.pl → webmincron.pl → scheduled_collect_system_info
+every 300s (5 min), calls df on all filesystems. Config at:
+  /etc/webmin/webmincron/crons/ → interval=300, module=system-status
+
+Fix: systemctl disable --now webmin  (Cockpit remains for web management)
+
+### Part 4: Verified
+Check 1  (10:37:27): drive state is: standby
+Check 2  (10:37:57): drive state is: standby
+...
+Check 30 (10:51:58): drive state is: standby
+=== 15 MINUTES PASSED - DRIVE STAYED ASLEEP ===
+fatrace: zero access to /mnt/storage during entire 15 minutes.</pre>
+                                    </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                </div>
+                </div>
+            </div>
+
+            <div class="tree-item" data-level="1">
+                <div class="tree-header" onclick="tog(this)">
+                    <span class="tree-icon">▶</span>
+                    <span class="tree-num">[02]</span>
+                    <span class="tree-label">Hardware & Drive Management</span>
+                </div>
+                <div class="tree-body">
+                <div class="bc">
+                    <div class="t"><p>€57 of secondhand hardware running 24/7 at ~10W. Every component chosen or upgraded for a specific reason.</p></div>
+
+                    <div class="tree-item" data-level="2">
+                        <div class="tree-header" onclick="tog(this)">
+                            <span class="tree-icon">▶</span>
+                            <span class="tree-label">Hardware</span>
+                        </div>
+                        <div class="tree-body">
+                        <div class="bc">
+                            <div class="t">
+                                <ul>
+                                    <li>Dell Wyse 5070 thin client (~€30 used). Silent, built for 24/7. Intel Celeron J4105, 8GB DDR4, Gigabit Ethernet. Upgraded from eMMC to 128GB M.2 SATA SSD (€13) for speed and storage headroom.</li>
+                                    <li>4TB Seagate Barracuda 2.5" — data storage, 1.8TB in use. Connected over USB 3.0. Two rotating 5TB USB drives for offsite backup (one home, one travels).</li>
+                                    <li>StarTech USB 3.0 SATA adapter (<code>0x14b0:0x0206</code>) — replaced the original Seagate enclosure specifically to get SMART passthrough support via SAT protocol.</li>
+                                </ul>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                    <div class="tree-item" data-level="2">
+                        <div class="tree-header" onclick="tog(this)">
+                            <span class="tree-icon">▶</span>
+                            <span class="tree-label">A 2.5" External USB Hard Drive Has No Business Being on a Server</span>
+                        </div>
+                        <div class="tree-body">
+                        <div class="bc">
+                            <div class="t">
+                                <p>For a home server with hours of idle between accesses, a laptop drive is actually a reasonable fit — the usage pattern is closer to a laptop than a rack server — sessions of a few hours with sometimes days of idle in between — the cost is a fraction, and the drive was already available. The catch: it needs to be actively spun down between uses to protect it, and keeping it down turned out to be unexpectedly complex. USB also adds a bridge chip that quietly breaks several things.</p>
+                            </div>
+
+                            <div class="tree-item" data-level="3">
+                                <div class="tree-header" onclick="tog(this)">
+                                    <span class="tree-icon">▶</span>
+                                    <span class="tag tag-bug">bug</span>
+                                    <span class="tree-label">SMART data inaccessible through USB bridge</span>
+                                </div>
+                                <div class="tree-body">
+                                <div class="bc">
+                                    <div class="incident">
+                                        <div class="ir"><span class="ik">symptom</span><span class="iv">Standard <code>smartctl /dev/sdb</code> returns no data — USB bridges don't forward ATA commands by default.</span></div>
+                                        <div class="ir"><span class="ik">root cause</span><span class="iv">The bridge chip translates SCSI commands but drops most ATA passthrough. SMART requires direct ATA access via SAT (SCSI ATA Translation) protocol.</span></div>
+                                        <div class="ir"><span class="ik">fix</span><span class="iv fix">Replaced original Seagate enclosure with a StarTech USB-SATA adapter (<code>0x14b0:0x0206</code>) which supports SAT passthrough. Command: <code>smartctl -a -d sat /dev/sdb</code></span></div>
+                                        <div class="ir"><span class="ik">side effect</span><span class="iv">After sustained I/O, the bridge leaves <code>hdparm -C</code> permanently unreliable. Switched spin-state detection to <code>smartctl -n standby</code> (SAT passthrough, never wakes drive). Exit 0 = spinning, exit 2 = standby.</span></div>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-item" data-level="3">
+                                <div class="tree-header" onclick="tog(this)">
+                                    <span class="tree-icon">▶</span>
+                                    <span class="tag tag-bug">bug</span>
+                                    <span class="tree-label">HDD spinning ~25× per day with no user activity</span>
+                                </div>
+                                <div class="tree-body">
+                                <div class="bc">
+                                    <div class="incident">
+                                        <div class="ir"><span class="ik">symptom</span><span class="iv">Start_Stop_Count +25×/day. Drive spinning down every 30–60 seconds, then waking on any activity.</span></div>
+                                        <div class="ir"><span class="ik">root cause</span><span class="iv">The original Seagate enclosure's firmware disabled the drive's aggressive factory standby timer on init. The StarTech adapter is a dumb pass-through — it doesn't configure anything, so the drive reverted to factory defaults: spin down after ~30 seconds of idle.</span></div>
+                                        <div class="ir"><span class="ik">fix</span><span class="iv fix"><code>hdparm -S 0 -B 254</code> to disable the standby timer. Made persistent via udev rule — settings re-applied on every USB reconnect.</span></div>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-item" data-level="3">
+                                <div class="tree-header" onclick="tog(this)">
+                                    <span class="tree-icon">▶</span>
+                                    <span class="tag tag-bug">bug</span>
+                                    <span class="tree-label">Drive wakes within seconds of every spin-down attempt</span>
+                                </div>
+                                <div class="tree-body">
+                                <div class="bc">
+                                    <div class="incident">
+                                        <div class="ir"><span class="ik">context</span><span class="iv">After disabling the standby timer, tried to re-enable controlled spin-down with a 1-hour idle timer. Drive woke within 2–3 seconds of every attempt.</span></div>
+                                        <div class="ir"><span class="ik">method</span><span class="iv"><code>fatrace /mnt/storage</code> soak monitoring while drive was supposed to be idle.</span></div>
+                                        <div class="ir"><span class="ik">hypothesis</span><span class="iv"><code>systemd-journald</code>: <code>sync()</code> every 5 min could trigger ext4 journal commits on all filesystems. Applied <code>Storage=volatile</code> precautionarily — drive still woke.</span></div>
+                                        <div class="ir"><span class="ik">culprit</span><span class="iv">Webmin: <code>scheduled_collect_system_info</code> runs <code>df</code> on all filesystems every 5 minutes, even with no active web session.</span></div>
+                                        <div class="ir"><span class="ik">fix</span><span class="iv fix"><code>Storage=volatile</code> in <code>journald.conf</code> + <code>systemctl disable --now webmin</code></span></div>
+                                        <div class="ir"><span class="ik">verified</span><span class="iv">5.5-hour zero-access soak test. Start_Stop_Count delta: +1 (the SMART check itself).</span></div>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-item" data-level="3">
+                                <div class="tree-header" onclick="tog(this)">
+                                    <span class="tree-icon">▶</span>
+                                    <span class="tag tag-bug">bug</span>
+                                    <span class="tree-label">HDD wakes on first access after >24h idle</span>
+                                </div>
+                                <div class="tree-body">
+                                <div class="bc">
+                                    <div class="incident">
+                                        <div class="ir"><span class="ik">symptom</span><span class="iv">After the journald + Webmin fix, drive still woke on first SSHFS mount after a long absence.</span></div>
+                                        <div class="ir"><span class="ik">constraint</span><span class="iv">Only reproducible after >24h away — impossible to catch in normal daily-use testing.</span></div>
+                                        <div class="ir"><span class="ik">root cause</span><span class="iv">The <code>relatime</code> mount option (included in <code>defaults</code>) updates atime when the stored value is older than 24h. Creates a dirty inode that ext4's 5-second journal commit interval flushes to disk — waking the HDD.</span></div>
+                                        <div class="ir"><span class="ik">fix</span><span class="iv fix">Added <code>noatime</code> to <code>/etc/fstab</code> mount options. Applied live with <code>mount -o remount,noatime</code> — no reboot needed.</span></div>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-item" data-level="3">
+                                <div class="tree-header" onclick="tog(this)">
+                                    <span class="tree-icon">▶</span>
+                                    <span class="tag tag-note">note</span>
+                                    <span class="tree-label">APM 127 vs 128 — one value that changes everything</span>
+                                </div>
+                                <div class="tree-body">
+                                <div class="bc">
+                                    <div class="t">
+                                        <p>APM (Advanced Power Management) values 1–127 each carry their own internal idle timer that overrides the <code>-S</code> standby setting entirely. APM 127 caused the drive to spin down within 2 minutes regardless of what <code>hdparm -S</code> was set to. APM 128 disables APM's internal timer while still allowing the <code>-S</code> standby timer to work. Production setting: <code>hdparm -B 128 -S 242</code> (APM 128, 1-hour standby). Persistent via udev rule at <code>/etc/udev/rules.d/69-hdparm-sdb.rules</code>.</p>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        </div>
+                    </div>
+
+                    <div class="tree-item" data-level="2">
+                        <div class="tree-header" onclick="tog(this)">
+                            <span class="tree-icon">▶</span>
+                            <span class="tree-label">Drive Health Monitoring</span>
+                        </div>
+                        <div class="tree-body">
+                        <div class="bc">
+                            <div class="t">
+                                <p>Consumer hardware — health monitoring is critical. Two systems run continuously: a weekly SMART check for long-term trends, and a real-time spin state monitor. Both push phone notifications.</p>
+                            </div>
+
+                            <div class="tree-item" data-level="3">
+                                <div class="tree-header" onclick="tog(this)">
+                                    <span class="tree-icon">▶</span>
+                                    <span class="tag tag-note">note</span>
+                                    <span class="tree-label">Weekly SMART check — Sunday 3 AM</span>
+                                </div>
+                                <div class="tree-body">
+                                <div class="bc">
+                                    <div class="t">
+                                        <ul>
+                                            <li>Runs every Sunday 3:00 AM via systemd timer. Tracks key attributes with week-on-week deltas: Start/Stop Count, Spin_Up_Time (arbitrary units — a rising trend is an early motor wear indicator), Power-On Hours, Head Flying Hours, temperature, reallocated/pending sectors.</li>
+                                            <li>Results pushed to Home Assistant via webhook → dashboard showing last 30 checks.</li>
+                                            <li>All weekly maintenance aligned to the same window: SMART 3:00, e2scrub 3:10, SSD TRIM 3:15. Drive wakes once, then spins back down after an hour.</li>
+                                            <li>Script re-applies <code>hdparm -B 128 -S 242</code> after each run — USB bridge leaves power settings in an inconsistent state after SMART access, which blinds the spin monitor until settings are re-applied.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+
+                            <div class="tree-item" data-level="3">
+                                <div class="tree-header" onclick="tog(this)">
+                                    <span class="tree-icon">▶</span>
+                                    <span class="tag tag-note">note</span>
+                                    <span class="tree-label">Real-time spin state monitor</span>
+                                </div>
+                                <div class="tree-body">
+                                <div class="bc">
+                                    <div class="t">
+                                        <ul>
+                                            <li>Persistent systemd service polling every 30 seconds. On state change (spinning ↔ standby) → HA webhook → phone notification.</li>
+                                            <li>Uses <code>smartctl -d sat -n standby</code> rather than <code>hdparm -C</code> — after sustained I/O the USB bridge makes <code>hdparm -C</code> permanently unreliable. SAT passthrough stays consistent and never wakes the drive.</li>
+                                            <li>Spin history (last 50 entries) surfaced in the HA dashboard alongside SMART data.</li>
+                                        </ul>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        </div>
+                    </div>
+
+                </div>
+                </div>
+            </div>
+
+            <div class="tree-item" data-level="1">
+                <div class="tree-header" onclick="tog(this)">
+                    <span class="tree-icon">▶</span>
+                    <span class="tree-num">[03]</span>
+                    <span class="tree-label">Tailscale — Remote Access</span>
+                </div>
+                <div class="tree-body">
+                <div class="bc">
+                    <div class="t"><p>Private WireGuard network that makes the server accessible from anywhere over the internet as if on the local network — no VPN server to manage.</p></div>
+
+                    <div class="tree-item" data-level="2">
+                        <div class="tree-header" onclick="tog(this)">
+                            <span class="tree-icon">▶</span>
+                            <span class="tree-label">Security</span>
+                        </div>
+                        <div class="tree-body">
+                        <div class="bc">
+                            <div class="t">
+                                <p>Access is controlled per device via ACLs — new devices get zero access by default. The laptop is the only device with full access to all services. Every other device is restricted to exactly the services it needs.</p>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                    <div class="tree-item" data-level="2">
+                        <div class="tree-header" onclick="tog(this)">
+                            <span class="tree-icon">▶</span>
+                            <span class="tree-label">Performance</span>
+                        </div>
+                        <div class="tree-body">
+                        <div class="bc">
+                            <div class="t">
+                                <p>Tailscale was falling back to relay servers (~5 MB/s) — the router's NAT configuration was blocking direct hole-punching. Adding a port forwarding rule gave Tailscale a stable inbound endpoint. Result: a steady 52 MB/s — the bottleneck is the server's CPU doing WireGuard encryption, not the network.</p>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                </div>
+                </div>
+            </div>
+
+            <div class="tree-item" data-level="1">
+                <div class="tree-header" onclick="tog(this)">
+                    <span class="tree-icon">▶</span>
+                    <span class="tree-num">[04]</span>
+                    <span class="tree-label">File Server</span>
+                </div>
+                <div class="tree-body">
+                <div class="bc">
+                    <div class="t"><p>The original reason for the server — 4TB of storage accessible from any device, anywhere.</p></div>
+
+                    <div class="tree-item" data-level="2">
+                        <div class="tree-header" onclick="tog(this)">
+                            <span class="tree-icon">▶</span>
+                            <span class="tree-label">Access</span>
+                        </div>
+                        <div class="tree-body">
+                        <div class="bc">
+                            <div class="t">
+                                <p>Two interfaces cover all use cases. The laptop mounts via SSHFS on demand using a desktop toggle; the iPhone connects through Samba via the iOS Files app. Filebrowser provides a web UI for remote access and file sharing via link. Local transfers run at ~100 MB/s over the home network; remote via Tailscale at ~52 MB/s.</p>
+                            </div>
+
+                            <div class="tree-item" data-level="3">
+                                <div class="tree-header" onclick="tog(this)">
+                                    <span class="tree-icon">▶</span>
+                                    <span class="tag tag-bug">bug</span>
+                                    <span class="tree-label">Three auto-mount approaches failed — ended up with a manual toggle</span>
+                                </div>
+                                <div class="tree-body">
+                                <div class="bc">
+                                    <div class="incident">
+                                        <div class="ir"><span class="ik">goal</span><span class="iv">Laptop mounts server storage automatically on connect, unmounts cleanly on suspend/shutdown.</span></div>
+                                        <div class="ir"><span class="ik">attempt 1</span><span class="iv">fstab CIFS + <code>x-systemd.automount</code> — GVFS retry loop when off-site, Nemo sluggish.</span></div>
+                                        <div class="ir"><span class="ik">attempt 2</span><span class="iv">NetworkManager dispatcher CIFS — D-state kernel freeze on suspend. CIFS uses kernel-space blocking I/O; can't be interrupted during suspend.</span></div>
+                                        <div class="ir"><span class="ik">attempt 3</span><span class="iv">NM dispatcher SSHFS (FUSE) — Nemo/Cinnamon sidebar polls the FUSE mount via GIO continuously. Caused freezes and one Cinnamon crash.</span></div>
+                                        <div class="ir"><span class="ik">root cause</span><span class="iv">Any permanent FUSE mount in Nemo's sidebar triggers constant GIO/GVFS polling — unavoidable with auto-mount.</span></div>
+                                        <div class="ir"><span class="ik">fix</span><span class="iv fix">Manual desktop toggle — the right fit for on-demand use. No persistent mount, no background polling, no GIO watching a remote filesystem. Sleep hook and shutdown service handle clean unmount automatically.</span></div>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        </div>
+                    </div>
+
+                </div>
+                </div>
+            </div>
+
+            <div class="tree-item" data-level="1">
+                <div class="tree-header" onclick="tog(this)">
+                    <span class="tree-icon">▶</span>
+                    <span class="tree-num">[05]</span>
+                    <span class="tree-label">Pi-hole — Network Ad Blocking</span>
+                </div>
+                <div class="tree-body">
+                <div class="bc">
+                    <div class="t"><p>DNS-based ad blocker running on the server, blocking ads across all Tailscale-connected devices — including inside apps on iOS, on mobile data, and on foreign WiFi, not just at home.</p></div>
+
+                    <div class="tree-item" data-level="2">
+                        <div class="tree-header" onclick="tog(this)">
+                            <span class="tree-icon">▶</span>
+                            <span class="tree-label">How it works</span>
+                        </div>
+                        <div class="tree-body">
+                        <div class="bc">
+                            <div class="t">
+                                <p>Pi-hole intercepts DNS queries and drops requests for known ad domains — 86,832 blocked by default (StevenBlack list). Devices opt in by enabling Tailscale DNS in the Tailscale app, which routes all their DNS through the server's Pi-hole. Because it runs over Tailscale, it works anywhere the device has a connection.</p>
+                                <p>All devices get ad-blocking via DNS (port 53 open to everyone in the ACL), but only the laptop and one phone can access the Pi-hole dashboard to change settings. The server itself uses a direct upstream resolver.</p>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                </div>
+                </div>
+            </div>
+
+            <div class="tree-item" data-level="1">
+                <div class="tree-header" onclick="tog(this)">
+                    <span class="tree-icon">▶</span>
+                    <span class="tree-num">[06]</span>
+                    <span class="tree-label">Home Assistant — Smart Home</span>
+                </div>
+                <div class="tree-body">
+                <div class="bc">
+                    <div class="t"><p>Self-hosted home automation hub running in Docker on the server — controls lights, sensors, and outlets from anywhere in the world via Tailscale, and doubles as the monitoring dashboard for the server itself.</p></div>
+
+                    <div class="tree-item" data-level="2">
+                        <div class="tree-header" onclick="tog(this)">
+                            <span class="tree-icon">▶</span>
+                            <span class="tree-label">Integrations</span>
+                        </div>
+                        <div class="tree-body">
+                        <div class="bc">
+                            <div class="t">
+                                <p>IKEA DIRIGERA hub connected via Matter protocol — lights and outlets controllable from HA. Apple HomeKit bridge runs in parallel, so Siri and the Home app work simultaneously without any conflict. Tailscale IPs are configured as trusted networks — HA skips authentication for connections from those IPs, so remote access via Tailscale requires no login.</p>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                    <div class="tree-item" data-level="2">
+                        <div class="tree-header" onclick="tog(this)">
+                            <span class="tree-icon">▶</span>
+                            <span class="tree-label">Automations</span>
+                        </div>
+                        <div class="tree-body">
+                        <div class="bc">
+                            <div class="t">
+                                <p>Lights turn on automatically when someone arrives home after dark — triggered by phone location via the HA mobile app. The automation has a prioritised fallback chain: if the primary light is unreachable (switch accidentally turned off, device unavailable), it tries the next one down the list rather than failing silently. Arriving home always resets the primary light to full brightness regardless of its previous state.</p>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                    <div class="tree-item" data-level="2">
+                        <div class="tree-header" onclick="tog(this)">
+                            <span class="tree-icon">▶</span>
+                            <span class="tree-label">Server monitoring dashboard</span>
+                        </div>
+                        <div class="tree-body">
+                        <div class="bc">
+                            <div class="t">
+                                <p>HA serves as the frontend for all server drive monitoring — SMART check history (last 30 runs with per-attribute deltas), real-time spin state, spin history, and manual trigger buttons for SMART checks and forced spin-down. Data is pushed from the server via webhooks and read by <code>command_line</code> sensors polling shell scripts every 60 seconds. All of it visible on mobile from anywhere via Tailscale.</p>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                </div>
+                </div>
+            </div>
+
+            <div class="tree-item" data-level="1">
+                <div class="tree-header" onclick="tog(this)">
+                    <span class="tree-icon">▶</span>
+                    <span class="tree-num">[07]</span>
+                    <span class="tree-label">Immich — Photo Management</span>
+                </div>
+                <div class="tree-body">
+                <div class="bc">
+                    <div class="t"><p>Self-hosted Google Photos alternative — automatic phone backup, AI-powered face and scene recognition, full photo library accessible from anywhere via Tailscale. No subscriptions, no third-party cloud.</p></div>
+
+                    <div class="tree-item" data-level="2">
+                        <div class="tree-header" onclick="tog(this)">
+                            <span class="tree-icon">▶</span>
+                            <span class="tree-label">Setup</span>
+                        </div>
+                        <div class="tree-body">
+                        <div class="bc">
+                            <div class="t">
+                                <p>Four Docker containers (server, machine learning, database, Redis). The machine learning container handles face clustering and scene detection locally — no data leaves the server. Photos stored on the 4TB HDD, database on the SSD — faster queries and write-heavy ML indexing stays off the HDD.</p>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                </div>
+                </div>
+            </div>
+
+            <div class="tree-item" data-level="1">
+                <div class="tree-header" onclick="tog(this)">
+                    <span class="tree-icon">▶</span>
+                    <span class="tree-num">[08]</span>
+                    <span class="tree-label">Backup System</span>
+                </div>
+                <div class="tree-body">
+                <div class="bc">
+                    <div class="t"><p>Restic + Backrest covering both server and laptop, with two rotating 5TB drives — one onsite, one offsite, swapped on every trip.</p></div>
+
+                    <div class="tree-item" data-level="2">
+                        <div class="tree-header" onclick="tog(this)">
+                            <span class="tree-icon">▶</span>
+                            <span class="tree-label">Strategy & Architecture</span>
+                        </div>
+                        <div class="tree-body">
+                        <div class="bc">
+                            <div class="t">
+                                <p>Restic is an incremental, deduplicated, encrypted backup tool. Backrest is a web GUI on top of it. The backup system was built and verified before any data was migrated — three copies: live data on the server, one drive onsite, one offsite. Each machine backs up independently using its own Backrest instance, so either drive works for either machine when plugged in.</p>
+                            </div>
+                        </div>
+                        </div>
+                    </div>
+
+                    <div class="tree-item" data-level="2">
+                        <div class="tree-header" onclick="tog(this)">
+                            <span class="tree-icon">▶</span>
+                            <span class="tree-label">Drive Verification</span>
+                        </div>
+                        <div class="tree-body">
+                        <div class="bc">
+                            <div class="t">
+                                <p>Every drive is burnt in before being trusted with backup data: full <code>dd</code> write across the entire surface, read-back verification, then <code>restic check --read-data</code> (full SHA-256 data verification). The process exists because of this:</p>
+                            </div>
+
+                            <div class="tree-item" data-level="3">
+                                <div class="tree-header" onclick="tog(this)">
+                                    <span class="tree-icon">▶</span>
+                                    <span class="tag tag-bug">bug</span>
+                                    <span class="tree-label">WD Elements 5TB — 18,971 bad blocks discovered after being trusted with backups</span>
+                                </div>
+                                <div class="tree-body">
+                                <div class="bc">
+                                    <div class="incident">
+                                        <div class="ir"><span class="ik">symptom</span><span class="iv">Drive appeared healthy — SMART showed only 8 bad sectors during normal read-only use.</span></div>
+                                        <div class="ir"><span class="ik">root cause</span><span class="iv">Writing new data corrupted sectors that were previously readable — invisible to read-only SMART tests.</span></div>
+                                        <div class="ir"><span class="ik">discovered</span><span class="iv">Destructive <code>badblocks</code> write test revealed 18,971 bad blocks across two physical zones. Drive condemned and retired.</span></div>
+                                        <div class="ir"><span class="ik">lesson</span><span class="iv fix">Read-only SMART is not sufficient. A full write + read-back test (<code>dd</code> fill → verify → restic check) is required before trusting any drive with backup data.</span></div>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        </div>
+                    </div>
+
+                    <div class="tree-item" data-level="2">
+                        <div class="tree-header" onclick="tog(this)">
+                            <span class="tree-icon">▶</span>
+                            <span class="tree-label">Issues & fixes</span>
+                        </div>
+                        <div class="tree-body">
+                        <div class="bc">
+
+                            <div class="tree-item" data-level="3">
+                                <div class="tree-header" onclick="tog(this)">
+                                    <span class="tree-icon">▶</span>
+                                    <span class="tag tag-bug">bug</span>
+                                    <span class="tree-label">Every server backup was a full 1.7TB re-read — 28h+ per run</span>
+                                </div>
+                                <div class="tree-body">
+                                <div class="bc">
+                                    <div class="incident">
+                                        <div class="ir"><span class="ik">symptom</span><span class="iv">Each backup re-read the full 1.7TB of source data regardless of what had changed — 28h+ per run.</span></div>
+                                        <div class="ir"><span class="ik">root cause</span><span class="iv">Server data was read via SSHFS from the laptop. SSHFS inode numbers are unstable across remounts — Restic uses inodes to detect unchanged files, so every file looked new every time.</span></div>
+                                        <div class="ir"><span class="ik">fix</span><span class="iv fix">Moved server backups to run on the server itself — local I/O, no network. Restic now sees stable inodes. Speed: 17 MB/s → 50–100 MB/s. Incrementals now only process actual changes.</span></div>
+                                    </div>
+                                </div>
+                                </div>
+                            </div>
+
+                        </div>
+                        </div>
+                    </div>
+
+                </div>
+                </div>
+            </div>
+
+    </div><!-- /tree -->
+
+</main>
+
+<footer>
+    <a href="https://github.com/TheRealNepomuk" target="_blank">github.com/TheRealNepomuk</a>
+</footer>
+
+<script>
+    function tog(header) {
+        const item = header.parentElement;
+        const body = header.nextElementSibling;
+        const icon = header.querySelector('.tree-icon');
+        const isOpen = body.classList.contains('open');
+        body.classList.toggle('open', !isOpen);
+        item.classList.toggle('open', !isOpen);
+        icon.textContent = isOpen ? '▶' : '▼';
+    }
+</script>
+
+</body>
+</html>
