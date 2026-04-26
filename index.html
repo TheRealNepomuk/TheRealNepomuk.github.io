@@ -32,6 +32,7 @@
             max-width: 800px;
             margin: 0 auto;
             padding: 3rem 2rem 6rem;
+            overflow-anchor: none;
         }
 
         /* HERO */
@@ -781,6 +782,413 @@ fatrace: zero access to /mnt/storage during entire 15 minutes.</pre>
                 </div>
                 </div>
             </div>
+
+    </div><!-- /tree -->
+
+    <div style="border-top: 1px solid var(--border); margin: 3.5rem 0;"></div>
+
+    <div class="project-name">GT Legends + Altbierbude on Linux <span>// compatibility · reverse engineering</span></div>
+    <div class="project-overview">
+        GT Legends is a 2005 racing simulation with an active online community to this day, built around <a href="https://www.altbierbude.de/" style="color:var(--accent);text-decoration:none;">Altbierbude</a>, a ~28GB community mod with its own cars, tracks, and multiplayer servers. This is the work involved in getting it fully running on Linux via Wine + Lutris, including online play. Fully working as of March 2026.
+    </div>
+
+    <div class="tree">
+
+        <div class="tree-item" data-level="1">
+            <div class="tree-header" onclick="tog(this)">
+                <span class="tree-icon">▶</span>
+                <span class="tree-num">[01]</span>
+                <span class="tree-label">Methodology</span>
+            </div>
+            <div class="tree-body">
+            <div class="bc">
+                <div class="t"><p>After seeing interest in the ABB forums for a Linux setup that nobody had documented, this was planned from the start as both a personal project and something to share with the community — which shaped the documentation approach: a working config for active development, a session log for tracking progress and decisions, and a public repo as the end product for other users.</p></div>
+
+                <div class="tree-item" data-level="2">
+                    <div class="tree-header" onclick="tog(this)">
+                        <span class="tree-icon">▶</span>
+                        <span class="tree-label">Working config file</span>
+                    </div>
+                    <div class="tree-body">
+                    <div class="bc">
+                        <div class="t">
+                            <p>A single config file covering everything needed to pick up a session: Wine runner split and rationale, key paths, DXVK config, confirmed fixes, known quirks, and outstanding issues. Kept as the authoritative reference rather than relying on memory across weeks of intermittent work.</p>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                <div class="tree-item" data-level="2">
+                    <div class="tree-header" onclick="tog(this)">
+                        <span class="tree-icon">▶</span>
+                        <span class="tree-label">Session log</span>
+                    </div>
+                    <div class="tree-body">
+                    <div class="bc">
+                        <div class="t">
+                            <p>Dated entries for every working session: what was tried, what failed, root cause when something broke, and what was learned. The layer that answers what the config file can't — <em>why does this look like this?</em> Especially useful for bugs that took multiple sessions to resolve.</p>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                <div class="tree-item" data-level="2">
+                    <div class="tree-header" onclick="tog(this)">
+                        <span class="tree-icon">▶</span>
+                        <span class="tree-label">Community documentation</span>
+                    </div>
+                    <div class="tree-body">
+                    <div class="bc">
+                        <div class="t">
+                            <p>The personal notes distilled into a public GitHub repo — <code>README.md</code>, a step-by-step install guide, and a technical deep-dive covering root cause analyses, Wine internals, and AutoUpdater reverse engineering. Published at <a href="https://github.com/TheRealNepomuk/gt-legends-altbierbude-linux" style="color:var(--accent);text-decoration:none;">github.com/TheRealNepomuk/gt-legends-altbierbude-linux</a> and posted to the ABB forums to help other Linux users. A Lutris installer YAML was written and submitted to lutris.net but is pending review.</p>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+            </div>
+            </div>
+        </div>
+
+        <div class="tree-item" data-level="1">
+            <div class="tree-header" onclick="tog(this)">
+                <span class="tree-icon">▶</span>
+                <span class="tree-num">[02]</span>
+                <span class="tree-label">Wine Setup</span>
+            </div>
+            <div class="tree-body">
+            <div class="bc">
+                <div class="t"><p>Getting GTL and its companion tools running required two separate Wine versions sharing one prefix — a workaround for a crash in the latest Wine that only affects this hardware configuration.</p></div>
+
+                <div class="tree-item" data-level="2">
+                    <div class="tree-header" onclick="tog(this)">
+                        <span class="tree-icon">▶</span>
+                        <span class="tree-label">Runner split</span>
+                    </div>
+                    <div class="tree-body">
+                    <div class="bc">
+                        <div class="t">
+                            <p>The full setup involves several components beyond the game itself: the ABB AutoUpdater (a community-provided Python tool for managing ABB content), GTLConfig (the game's graphics and settings configurator), and LowGuard (the ABB anti-cheat, required for submitting lap records). The game runs fine on the latest Wine with DXVK, but these companion tools are GDI/Win32 applications that crash under wine-11.3 on this hardware — requiring a split where each group runs under a different Wine version, both sharing the same 32-bit prefix.</p>
+                        </div>
+
+                        <div class="tree-item" data-level="3">
+                            <div class="tree-header" onclick="tog(this)">
+                                <span class="tree-icon">▶</span>
+                                <span class="tag tag-bug">bug</span>
+                                <span class="tree-label">Wine 11.3 crashes all GDI applications on this GPU</span>
+                            </div>
+                            <div class="tree-body">
+                            <div class="bc">
+                                <div class="incident">
+                                    <div class="ir"><span class="ik">symptom</span><span class="iv">AutoUpdater, GTLConfig, and LowGuard all crash immediately under wine-11.3. GTL itself launches fine.</span></div>
+                                    <div class="ir"><span class="ik">root cause</span><span class="iv">wine-11.3 has a heap corruption bug in the <code>NtUserChangeDisplaySettings</code> error path that manifests on Intel GPU + XRandR configurations. Confirmed by testing: any GDI application (including Python and Notepad) crashes the same way. GTL is unaffected because DXVK takes over the rendering pipeline before that code path is reached.</span></div>
+                                    <div class="ir"><span class="ik">fix</span><span class="iv fix">Runner split: GTL stays on wine-11.3 + DXVK; all GDI apps moved to wine-10.20 where the bug is absent. Both runners share the same prefix without conflict.</span></div>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    </div>
+                </div>
+
+                <div class="tree-item" data-level="2">
+                    <div class="tree-header" onclick="tog(this)">
+                        <span class="tree-icon">▶</span>
+                        <span class="tree-label">Graphics configuration</span>
+                    </div>
+                    <div class="tree-body">
+                    <div class="bc">
+                        <div class="t">
+                            <p>DXVK is a translation layer that converts GTL's DirectX 9 calls to Vulkan, giving better performance and compatibility than Wine's built-in DirectX implementation. It's enabled in Lutris and configured via its own <code>dxvk.conf</code> file. Three tweaks were needed beyond defaults:</p>
+                        </div>
+
+                        <div class="tree-item" data-level="3">
+                            <div class="tree-header" onclick="tog(this)">
+                                <span class="tree-icon">▶</span>
+                                <span class="tag tag-note">note</span>
+                                <span class="tree-label">VRAM detection fix — game was forcing minimum quality settings</span>
+                            </div>
+                            <div class="tree-body">
+                            <div class="bc">
+                                <div class="t">
+                                    <p>GTL reads available VRAM to determine texture and shader quality levels. On an integrated GPU with no dedicated VRAM, DXVK reports a small shared memory value; GTL interprets this as low-end hardware and forces minimum quality. Setting <code>d3d9.maxAvailableMemory = 2048</code> in <code>dxvk.conf</code> fixes the detection and makes GTL select full quality settings.</p>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+
+                        <div class="tree-item" data-level="3">
+                            <div class="tree-header" onclick="tog(this)">
+                                <span class="tree-icon">▶</span>
+                                <span class="tag tag-note">note</span>
+                                <span class="tree-label">Anisotropic filtering — broken track markings at distance</span>
+                            </div>
+                            <div class="tree-body">
+                            <div class="bc">
+                                <div class="t">
+                                    <p>Track surface markings (kerbs, painted lines) break up and disappear at distance without anisotropic filtering. Setting <code>d3d9.samplerAnisotropy = 8</code> forces it at the DXVK level, fixing it globally without touching any in-game setting.</p>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+
+                        <div class="tree-item" data-level="3">
+                            <div class="tree-header" onclick="tog(this)">
+                                <span class="tree-icon">▶</span>
+                                <span class="tag tag-note">note</span>
+                                <span class="tree-label">Frame latency — tighter CPU-GPU pipeline</span>
+                            </div>
+                            <div class="tree-body">
+                            <div class="bc">
+                                <div class="t">
+                                    <p><code>d3d9.maxFrameLatency = 1</code> reduces the number of frames the CPU queues ahead for the GPU, tightening the pipeline and reducing input lag — particularly relevant on a system where the GPU has no dedicated VRAM buffer.</p>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    </div>
+                </div>
+
+            </div>
+            </div>
+        </div>
+
+        <div class="tree-item" data-level="1">
+            <div class="tree-header" onclick="tog(this)">
+                <span class="tree-icon">▶</span>
+                <span class="tree-num">[03]</span>
+                <span class="tree-label">ABB AutoUpdater</span>
+            </div>
+            <div class="tree-body">
+            <div class="bc">
+                <div class="t"><p>The ABB AutoUpdater is a community-provided Python 2.7 tool that manages the full ~28GB of ABB content — downloading, verifying, and installing cars, tracks, and patches. Diagnosing its bugs required decompiling its compiled Python bytecode using <code>uncompyle6</code> to read the source logic directly.</p></div>
+
+                <div class="tree-item" data-level="2">
+                    <div class="tree-header" onclick="tog(this)">
+                        <span class="tree-icon">▶</span>
+                        <span class="tree-label">How it works</span>
+                    </div>
+                    <div class="tree-body">
+                    <div class="bc">
+                        <div class="t">
+                            <p>The AutoUpdater compares a local <code>installed.csv</code> (package ID + MD5 hashes) against the server's expected hashes — any mismatch triggers an install. Content is downloaded into a staging archive folder first, then extracted into the game directory. The install queue processes one item per category (tracks, cars, misc) before moving on — meaning a single stuck item blocks everything behind it in that category, and misc installs only run once all tracks and cars are clear.</p>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                <div class="tree-item" data-level="2">
+                    <div class="tree-header" onclick="tog(this)">
+                        <span class="tree-icon">▶</span>
+                        <span class="tree-label">Issues</span>
+                    </div>
+                    <div class="tree-body">
+                    <div class="bc">
+
+                        <div class="tree-item" data-level="3">
+                            <div class="tree-header" onclick="tog(this)">
+                                <span class="tree-icon">▶</span>
+                                <span class="tag tag-bug">bug</span>
+                                <span class="tree-label">Finchfields track deadlocks the entire install queue</span>
+                            </div>
+                            <div class="tree-body">
+                            <div class="bc">
+                                <div class="incident">
+                                    <div class="ir"><span class="ik">symptom</span><span class="iv">AutoUpdater stalls — no tracks, cars, or misc content installs. Progress bar frozen.</span></div>
+                                    <div class="ir"><span class="ik">root cause</span><span class="iv">Finchfields (<code>Finchfields_GTL_V1_01.zip</code>, 134MB) is only available via P2P with zero active seeders. The queue processes the first pending item per category before moving on — Finchfields sits at the front of the track queue and blocks everything behind it. Because misc installs only run once all tracks and cars are clear, the entire pipeline stalls.</span></div>
+                                    <div class="ir"><span class="ik">fix</span><span class="iv fix">Manually download the zip from the altbierbude.de website and place it in the local archive folder. The AutoUpdater detects it as already present and installs it normally, unblocking the queue. Finchfields is rarely raced on ABB — not required for online play.</span></div>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+
+                        <div class="tree-item" data-level="3">
+                            <div class="tree-header" onclick="tog(this)">
+                                <span class="tree-icon">▶</span>
+                                <span class="tag tag-note">note</span>
+                                <span class="tree-label">"Game folder changed" dialog fires every session on Linux</span>
+                            </div>
+                            <div class="tree-body">
+                            <div class="bc">
+                                <div class="t">
+                                    <p>The AutoUpdater checks whether the game folder has changed since last run using Python's <code>os.path.getctime()</code>. On Windows this returns the file creation time, which is stable. On Linux, <code>getctime()</code> returns the inode change time — which updates every time files are added to the folder. Every install changes the GTL folder's ctime, so the dialog appears at the start of every session. It defaults to Yes (full reinstall) — always click No to proceed normally. The underlying hash-based install logic is unaffected.</p>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    </div>
+                </div>
+
+            </div>
+            </div>
+        </div>
+
+        <div class="tree-item" data-level="1">
+            <div class="tree-header" onclick="tog(this)">
+                <span class="tree-icon">▶</span>
+                <span class="tree-num">[04]</span>
+                <span class="tree-label">Online Play</span>
+            </div>
+            <div class="tree-body">
+            <div class="bc">
+                <div class="t"><p>Online play on ABB servers requires a registered account, an online key (printed in the original game manual), and a complete content installation.</p></div>
+
+                <div class="tree-item" data-level="2">
+                    <div class="tree-header" onclick="tog(this)">
+                        <span class="tree-icon">▶</span>
+                        <span class="tree-label">Issues</span>
+                    </div>
+                    <div class="tree-body">
+                    <div class="bc">
+
+                        <div class="tree-item" data-level="3">
+                            <div class="tree-header" onclick="tog(this)">
+                                <span class="tree-icon">▶</span>
+                                <span class="tag tag-bug">bug</span>
+                                <span class="tree-label">Kicked from server immediately after joining</span>
+                            </div>
+                            <div class="tree-body">
+                            <div class="bc">
+                                <div class="incident">
+                                    <div class="ir"><span class="ik">symptom</span><span class="iv">Game joins the ABB server then gets kicked within seconds, every time.</span></div>
+                                    <div class="ir"><span class="ik">suspects</span><span class="iv">Firewall blocking game traffic, incorrect online key, LowGuard not running, corrupted garage file — all investigated and ruled out.</span></div>
+                                    <div class="ir"><span class="ik">root cause</span><span class="iv">Three car packs (TC-65, GTC-65, GTC-TC-76) had been downloaded to the archive but not yet extracted into the game directory. The server checks that all clients have matching content — missing cars trigger an immediate kick.</span></div>
+                                    <div class="ir"><span class="ik">fix</span><span class="iv fix">Ran the AutoUpdater to completion to extract all pending car packs. Joined the ABB server successfully on the next attempt.</span></div>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    </div>
+                </div>
+
+                <div class="tree-item" data-level="2">
+                    <div class="tree-header" onclick="tog(this)">
+                        <span class="tree-icon">▶</span>
+                        <span class="tree-label">LowGuard anti-cheat</span>
+                    </div>
+                    <div class="tree-body">
+                    <div class="bc">
+                        <div class="t">
+                            <p>LowGuard is the ABB anti-cheat client — only required for submitting lap records, not for general online play. It runs as a .NET application under wine-10.20, requiring Wine Mono as the runtime. GTL's install path must be set manually via the LowGuard settings UI on first launch — it saves to a user config file in AppData, not alongside the executable.</p>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                <div class="tree-item" data-level="2">
+                    <div class="tree-header" onclick="tog(this)">
+                        <span class="tree-icon">▶</span>
+                        <span class="tree-label">ZeroTier — private races</span>
+                    </div>
+                    <div class="tree-body">
+                    <div class="bc">
+                        <div class="t">
+                            <p>ZeroTier creates a virtual LAN over the internet, allowing private races with friends without going through the ABB servers. It has no GUI on Linux, so a desktop launcher was created to start it directly from the desktop, with a semi-automated flow for adding friends to the network. Installed with autostart disabled — started on demand via a passwordless sudoers rule so it doesn't consume resources during normal use.</p>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+            </div>
+            </div>
+        </div>
+
+        <div class="tree-item" data-level="1">
+            <div class="tree-header" onclick="tog(this)">
+                <span class="tree-icon">▶</span>
+                <span class="tree-num">[05]</span>
+                <span class="tree-label">Keyboard Input</span>
+            </div>
+            <div class="tree-body">
+            <div class="bc">
+                <div class="t"><p>Arrow keys occasionally stop registering mid-race — never reproducible on Windows, Wine/Linux specific. Steering wheel users are unaffected.</p></div>
+
+                <div class="tree-item" data-level="2">
+                    <div class="tree-header" onclick="tog(this)">
+                        <span class="tree-icon">▶</span>
+                        <span class="tree-label">Issues</span>
+                    </div>
+                    <div class="tree-body">
+                    <div class="bc">
+
+                        <div class="tree-item" data-level="3">
+                            <div class="tree-header" onclick="tog(this)">
+                                <span class="tree-icon">▶</span>
+                                <span class="tag tag-bug">bug</span>
+                                <span class="tree-label">Keys drop mid-race — root cause confirmed, random culprit still unknown</span>
+                            </div>
+                            <div class="tree-body">
+                            <div class="bc">
+                                <div class="incident">
+                                    <div class="ir"><span class="ik">symptom</span><span class="iv">Arrow keys stop registering during a race. Key stays dead until released and repressed. Occasionally the opposite: a key latches as pressed with no input — car steers on its own until the key is pressed and released once.</span></div>
+                                    <div class="ir"><span class="ik">method</span><span class="iv">Monitored GTL's X11 window events with <code>xev</code> during gameplay. Wrote <code>trigger-grab.py</code> to deliberately trigger an <code>XGrabKeyboard</code> call and confirm the failure mode live.</span></div>
+                                    <div class="ir"><span class="ik">root cause</span><span class="iv">When any application calls <code>XGrabKeyboard</code>, GTL's window receives a <code>FocusOut mode NotifyGrab</code> event. Wine interprets this as losing focus and clears all held key states — phantom KeyUp for every held key. On grab release, <code>KeymapNotify</code> can cause Wine to latch a physically-held key as pressed, explaining the phantom steering.</span></div>
+                                    <div class="ir"><span class="ik">confirmed</span><span class="iv">Volume and brightness OSD keys verified as one trigger — <code>xev</code> shows <code>FocusOut NotifyGrab</code> on each press. Both failure modes (drop and phantom press) reproduced live with <code>trigger-grab.py</code>.</span></div>
+                                    <div class="ir"><span class="ik">disproved</span><span class="iv">CPU preemption, keyboard ghosting, <code>UseTakeFocus=N</code>, Wine virtual desktop (WineHQ Bug #57423 — actually makes it worse).</span></div>
+                                    <div class="ir"><span class="ik">no fix</span><span class="iv">The key-clearing behaviour on <code>FocusOut NotifyGrab</code> is hardcoded in Wine's X11 driver (<code>dlls/winex11.drv/event.c</code>). No patch exists in Wine or wine-staging. The random drops — some background process calling <code>XGrabKeyboard</code> during gameplay — remain unidentified. A monitoring script (<code>monitor-grabs.sh</code>) logs every grab with timestamp and window details to catch it.</span></div>
+                                </div>
+                            </div>
+                            </div>
+                        </div>
+
+                    </div>
+                    </div>
+                </div>
+
+            </div>
+            </div>
+        </div>
+
+        <div class="tree-item" data-level="1">
+            <div class="tree-header" onclick="tog(this)">
+                <span class="tree-icon">▶</span>
+                <span class="tree-num">[06]</span>
+                <span class="tree-label">Performance & CPU Affinity</span>
+            </div>
+            <div class="tree-body">
+            <div class="bc">
+                <div class="t"><p>GTL dates from 2005 and runs its main loop on a single core — but pinning it to the right cores on modern hardware makes a measurable difference to frame consistency.</p></div>
+
+                <div class="tree-item" data-level="2">
+                    <div class="tree-header" onclick="tog(this)">
+                        <span class="tree-icon">▶</span>
+                        <span class="tree-label">CPU affinity</span>
+                    </div>
+                    <div class="tree-body">
+                    <div class="bc">
+                        <div class="t">
+                            <p>The i5-8365U has 4 physical cores exposed as 8 logical threads via Hyper-Threading — each physical core runs two logical threads that share execution units and L1/L2 cache. GTL's main loop is single-threaded, but the process has background threads (audio, AI, I/O) that benefit from having additional cores available. The goal is to give the main loop and background threads each their own independent physical core, with no contention.</p>
+                            <p>CPU 0 handles system IRQs and is avoided. Picking both HT siblings of one physical core (e.g. CPU 2 + CPU 6) is counterproductive — they share the same execution units, so background threads still compete with the main loop. The right choice is two cores from different physical cores: <strong>CPU 2 and CPU 3</strong> — main loop uses one, background threads use the other, no cache or execution unit sharing between them.</p>
+                            <p>Without affinity set, GTL gravitates to CPU 0 by default — the core that also handles system IRQs. CPU 0 saturates at ~100% and the framerate drops to ~38fps at race starts. With <code>taskset -cp 2,3</code> applied: CPU 0 stays free for IRQs, CPUs 2–3 run the game at 40–50% load, and framerate holds at 60fps+ with no spikes.</p>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+                <div class="tree-item" data-level="2">
+                    <div class="tree-header" onclick="tog(this)">
+                        <span class="tree-icon">▶</span>
+                        <span class="tree-label">Launcher automation</span>
+                    </div>
+                    <div class="tree-body">
+                    <div class="bc">
+                        <div class="t">
+                            <p>CPU affinity is a runtime process property — it can't be set before the process exists and doesn't persist after it exits. The launcher script starts GTL via Lutris, waits for the process to appear, then applies <code>taskset -cp 2,3 &lt;pid&gt;</code> automatically. No manual step required each session.</p>
+                        </div>
+                    </div>
+                    </div>
+                </div>
+
+            </div>
+            </div>
+        </div>
 
     </div><!-- /tree -->
 
